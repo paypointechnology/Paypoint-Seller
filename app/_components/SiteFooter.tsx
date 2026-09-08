@@ -41,9 +41,9 @@ export default function SiteFooter() {
             <div className="flex flex-col gap-4">
               <h4 className="text-[11px] font-bold uppercase tracking-widest text-[#9A99A8]">Legal</h4>
               <ul className="flex flex-col gap-3">
-                <li><a href="#" className="text-sm text-[#33323F] transition-colors hover:text-[#14132B]">Terms</a></li>
-                <li><a href="#" className="text-sm text-[#33323F] transition-colors hover:text-[#14132B]">Privacy</a></li>
-                <li><a href="#" className="text-sm text-[#33323F] transition-colors hover:text-[#14132B]">Cookies</a></li>
+                <li><a href="/terms" className="text-sm text-[#33323F] transition-colors hover:text-[#14132B]">Terms</a></li>
+                <li><a href="/privacy" className="text-sm text-[#33323F] transition-colors hover:text-[#14132B]">Privacy</a></li>
+                <li><a href="/privacy#cookies" className="text-sm text-[#33323F] transition-colors hover:text-[#14132B]">Cookies</a></li>
               </ul>
             </div>
             {/* CONNECT */}
