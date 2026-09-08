@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import AuthHashRedirect from "./_components/AuthHashRedirect";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,6 +29,7 @@ export default function RootLayout({
       <body
         className={`${inter.className} bg-white text-[#33323F] antialiased overflow-x-hidden selection:bg-[#EEEDFE] selection:text-[#14132B]`}
       >
+        <AuthHashRedirect />
         {children}
       </body>
     </html>

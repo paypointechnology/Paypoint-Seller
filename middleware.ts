@@ -17,6 +17,16 @@ export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
 
   const { pathname } = request.nextUrl;
+
+  // 1b. Auth code delivered somewhere other than /auth/callback (Supabase falls
+  //     back to the Site URL when redirectTo isn't on its allowlist). Forward it
+  //     so the exchange still completes instead of stranding the user.
+  if (request.nextUrl.searchParams.has("code") && !pathname.startsWith("/auth/callback")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   const isProtected = PROTECTED_PREFIXES.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
