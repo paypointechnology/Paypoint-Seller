@@ -10,8 +10,8 @@ import {
 /**
  * Brand colour picker: curated swatches, the native colour wheel, and a hex
  * field for sellers who know their exact brand code. Emits a normalised
- * "#RRGGBB" on every valid change; the live sample shows how the checkout
- * "Pay" button will look, including the auto-picked label colour.
+ * "#RRGGBB" on every valid change; the live sample shows how their checkout
+ * button will look in that colour, including the auto-picked label colour.
  */
 export default function BrandColorPicker({
   value,
@@ -144,10 +144,9 @@ export default function BrandColorPicker({
           style={{ backgroundColor: theme.brand, color: theme.onBrand }}
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="4" y="10" width="16" height="11" rx="2" />
-            <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+            <path d="M20 6 9 17l-5-5" />
           </svg>
-          Pay ₦35,000
+          Your checkout button
         </div>
       </div>
 
