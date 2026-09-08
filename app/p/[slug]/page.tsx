@@ -28,6 +28,7 @@ type PublicPage = {
   customers_served: number;
   business_name: string | null;
   logo_url: string | null;
+  brand_color: string | null;
 };
 
 async function getPage(slug: string): Promise<PublicPage | null> {
@@ -75,6 +76,7 @@ function toCheckoutData(page: PublicPage): CheckoutData {
     delivery: page.delivery_info || "",
     paidCount: page.customers_served || 0,
     buyerFields: fields,
+    accent: page.brand_color || undefined,
   };
 }
 

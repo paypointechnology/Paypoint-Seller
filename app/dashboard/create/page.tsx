@@ -22,6 +22,7 @@ export default async function CreatePage() {
     <CreateBuilder
       businessName={profile?.businessName ?? "Your business"}
       sellerLogo={profile?.logoUrl || "/assets/paypoint-icon.png"}
+      brandColor={profile?.brandColor || undefined}
     />
   );
 }

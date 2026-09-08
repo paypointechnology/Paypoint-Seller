@@ -19,9 +19,11 @@ const SLUG_FALLBACK = "your-page";
 export default function CreateBuilder({
   businessName,
   sellerLogo,
+  brandColor,
 }: {
   businessName: string;
   sellerLogo: string;
+  brandColor?: string;
 }) {
   // ── Form state (single source of truth for the live preview) ──────────────
   const [type, setType] = useState<PageType>("product");
@@ -55,6 +57,7 @@ export default function CreateBuilder({
       // Seller identity comes from the signed-in seller's real profile.
       business: businessName,
       sellerLogo: sellerLogo,
+      accent: brandColor,
       contacts: SAMPLE.contacts,
       productImage: photoUrl,
       title: title.trim(),
@@ -64,7 +67,7 @@ export default function CreateBuilder({
       paidCount: 0, // brand-new page → social proof hidden
       buyerFields: fields,
     }),
-    [photoUrl, title, description, price, delivery, fields, businessName, sellerLogo],
+    [photoUrl, title, description, price, delivery, fields, businessName, sellerLogo, brandColor],
   );
 
   // ── Handlers ──────────────────────────────────────────────────────────────

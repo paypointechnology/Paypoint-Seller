@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { normalizeNgPhone } from "@/lib/phone";
+import { normalizeHex } from "@/lib/brand-color";
 import { sendOtpTemplate } from "@/lib/whatsapp";
 import { verifyBvn, verifyCac } from "@/lib/kora";
 import {
@@ -62,10 +63,14 @@ export async function saveBrand(input: {
   if (!input.firstName?.trim()) {
     return { ok: false, error: "Please enter your first name." };
   }
+  const brandColor = normalizeHex(input.brandColor);
+  if (!brandColor) {
+    return { ok: false, error: "Enter a valid brand colour, like #5F58F4." };
+  }
   return updateProfile({
     business_name: input.businessName.trim(),
     logo_url: input.logoUrl,
-    brand_color: input.brandColor,
+    brand_color: brandColor,
     first_name: input.firstName.trim(),
     last_name: input.lastName?.trim() || null,
   });

@@ -60,9 +60,8 @@ export default function StepOwner({
       }
       setOwnerName(res.ownerName ?? null);
       setIsDev(Boolean(res.dev));
+      // No auto-advance: the seller reviews the result and continues themselves.
       setStatus("verified");
-      // Brief pause on the success panel before advancing.
-      setTimeout(onVerified, 1400);
     } catch {
       setStatus("idle");
       setError("We couldn't reach the verification service. Please try again.");
@@ -108,24 +107,34 @@ export default function StepOwner({
       </div>
 
       {status === "verified" ? (
-        /* Success panel */
-        <div className="mt-6 flex items-center gap-3 rounded-[10px] border border-[#D4F3E2] bg-[#E7F8EF] px-4 py-4">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0B7A4B] text-white">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
-          </span>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-[#14132B]">
-              {ownerName ? `Verified: ${ownerName}` : "Identity verified"}
-            </p>
-            <p className="text-xs text-[#0B7A4B]">
-              {isDev
-                ? "Test mode — no registry lookup was made."
-                : "You’re fully verified — taking you back…"}
-            </p>
+        /* Success panel — seller reviews the result, then continues */
+        <>
+          <div className="mt-6 flex items-center gap-3 rounded-[10px] border border-[#D4F3E2] bg-[#E7F8EF] px-4 py-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#0B7A4B] text-white">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#14132B]">
+                {ownerName ? `Verified: ${ownerName}` : "Identity verified"}
+              </p>
+              <p className="text-xs text-[#0B7A4B]">
+                {isDev
+                  ? "Test mode — no registry lookup was made."
+                  : "Your business is fully verified."}
+              </p>
+            </div>
           </div>
-        </div>
+
+          <button
+            type="button"
+            onClick={onVerified}
+            className="mt-4 h-11 w-full rounded-xl bg-[#5F58F4] text-sm font-semibold text-white transition hover:bg-[#4A43D6]"
+          >
+            Continue to dashboard
+          </button>
+        </>
       ) : (
         <>
           {/* BVN */}

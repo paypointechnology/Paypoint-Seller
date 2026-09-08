@@ -2,12 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeHex } from "@/lib/brand-color";
 
 export type SaveResult = { ok: boolean; error?: string; logoUrl?: string };
 
 /**
- * Persist the seller's business profile (name, WhatsApp phone, and optional
- * new logo). Writes are RLS-scoped to the signed-in user. The logo file is
+ * Persist the seller's business profile (name, WhatsApp phone, brand colour,
+ * and optional new logo). Writes are RLS-scoped to the signed-in user. The logo file is
  * uploaded to the owner-scoped `logos/<uid>/` path and its public URL saved.
  */
 export async function saveBusiness(formData: FormData): Promise<SaveResult> {
@@ -20,10 +21,13 @@ export async function saveBusiness(formData: FormData): Promise<SaveResult> {
   const businessName = String(formData.get("business_name") ?? "").trim();
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
   const logo = formData.get("logo");
+  const brandColor = normalizeHex(String(formData.get("brand_color") ?? ""));
+  if (!brandColor) return { ok: false, error: "Enter a valid brand colour, like #5F58F4." };
 
   const update: Record<string, string> = {
     business_name: businessName,
     whatsapp,
+    brand_color: brandColor,
   };
 
   // Optional logo upload.

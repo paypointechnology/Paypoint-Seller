@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SAMPLE } from "./sampleCheckout";
+import { brandCssVars } from "@/lib/brand-color";
 import { startCheckout } from "../actions";
 import {
   LockIcon,
@@ -17,7 +18,8 @@ import {
  *   1. Public buyer page (/p/[slug]) — interactive, pays → /pay/redirect.
  *   2. The create-page builder's "Live preview" — passes `preview` so the same
  *      layout mirrors the seller's form in real time (non-interactive).
- * Brand-only colours, no processor names, no em dashes.
+ * Brand-only colours, no processor names, no em dashes. Every accent reads
+ * from the seller's brand colour via CSS variables (see lib/brand-color).
  */
 
 /** Which buyer fields the checkout collects. Name is always on. */
@@ -39,6 +41,8 @@ export type CheckoutData = {
   delivery: string;
   paidCount: number;
   buyerFields: BuyerFields;
+  /** Seller's brand colour ("#RRGGBB"); falls back to Paypoint indigo. */
+  accent?: string;
 };
 
 const DEFAULT_FIELDS: BuyerFields = { phone: true, email: false, address: false };
@@ -82,6 +86,7 @@ export default function CheckoutCard({
   const delivery = data?.delivery ?? SAMPLE.delivery;
   const paidCount = data?.paidCount ?? SAMPLE.paidCount;
   const fields = data?.buyerFields ?? DEFAULT_FIELDS;
+  const themeVars = brandCssVars(data?.accent) as React.CSSProperties;
 
   const displayTitle = title || (preview ? "Your product title" : title);
   const titleMuted = preview && !title;
@@ -146,7 +151,10 @@ export default function CheckoutCard({
   }
 
   return (
-    <div className="w-full max-w-[440px] overflow-hidden rounded-[24px] border border-[#ECEBF3] bg-white shadow-[0_20px_60px_-30px_rgba(95,88,244,0.35)]">
+    <div
+      style={themeVars}
+      className="w-full max-w-[440px] overflow-hidden rounded-[24px] border border-[#ECEBF3] bg-white shadow-[0_20px_60px_-30px_rgba(20,19,43,0.25)]"
+    >
       {/* Product image */}
       {showPhoto ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -166,7 +174,7 @@ export default function CheckoutCard({
       {/* Seller row */}
       <div className="flex items-center justify-between px-5 pt-4">
         <div className="flex min-w-0 items-center gap-2.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#EEEDFE] text-xs font-bold text-[#5F58F4]">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[var(--brand-soft)] text-xs font-bold text-[var(--brand-text)]">
             {sellerLogo && sellerLogo !== SAMPLE.sellerLogo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={sellerLogo} alt="" className="h-full w-full object-cover" />
@@ -290,7 +298,7 @@ export default function CheckoutCard({
                 disabled={preview}
                 value={stateVal}
                 onChange={(e) => setStateVal(e.target.value)}
-                className="h-11 w-full appearance-none rounded-[11px] border border-[#E3E2EE] bg-white px-3 text-sm text-[#14132B] outline-none transition focus:border-[#5F58F4] focus:ring-2 focus:ring-[#EEEDFE]"
+                className="h-11 w-full appearance-none rounded-[11px] border border-[#E3E2EE] bg-white px-3 text-sm text-[#14132B] outline-none transition focus:border-[var(--brand)] focus:ring-2 focus:ring-[var(--brand-soft)]"
               >
                 <option value="" disabled>State</option>
                 {NG_STATES.map((s) => (
@@ -322,7 +330,7 @@ export default function CheckoutCard({
 
       {/* Trust line */}
       <div className="px-5 pt-3">
-        <div className="rounded-[11px] border border-[#EEEDFE] bg-[#F5F4FF] px-4 py-3 text-center text-xs font-semibold leading-relaxed text-[#5F58F4]">
+        <div className="rounded-[11px] border border-[var(--brand-edge)] bg-[var(--brand-soft)] px-4 py-3 text-center text-xs font-semibold leading-relaxed text-[var(--brand-text)]">
           You&rsquo;re paying {business} directly.
           <br />
           Paypoint never holds your money.
@@ -341,11 +349,11 @@ export default function CheckoutCard({
           onClick={handlePay}
           disabled={submitting}
           tabIndex={preview ? -1 : undefined}
-          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] bg-[#5F58F4] text-[16px] font-extrabold text-white transition hover:bg-[#4A43D6] disabled:opacity-70"
+          className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] bg-[var(--brand)] text-[16px] font-extrabold text-[var(--on-brand)] transition hover:bg-[var(--brand-hover)] disabled:opacity-70"
         >
           {submitting ? (
             <>
-              <span className="h-4 w-4 animate-spin rounded-full border-[2.5px] border-white/40 border-t-white" />
+              <span className="h-4 w-4 animate-spin rounded-full border-[2.5px] border-current opacity-80 [border-top-color:transparent]" />
               Preparing secure payment…
             </>
           ) : (
@@ -378,9 +386,9 @@ export default function CheckoutCard({
                   target="_blank"
                   rel="noopener noreferrer"
                   tabIndex={preview ? -1 : undefined}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#E3E2EE] bg-white px-3 py-1.5 text-xs font-medium text-[#33323F] transition hover:border-[#C7C4F7] hover:bg-[#F5F4FF]"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#E3E2EE] bg-white px-3 py-1.5 text-xs font-medium text-[#33323F] transition hover:border-[var(--brand-edge)] hover:bg-[var(--brand-soft)]"
                 >
-                  <span className="text-[#5F58F4]">
+                  <span className="text-[var(--brand-text)]">
                     {c.type === "whatsapp" ? <WhatsAppIcon size={14} /> : <InstagramIcon size={14} />}
                   </span>
                   {c.label}
@@ -404,7 +412,7 @@ export default function CheckoutCard({
                 type="button"
                 onClick={() => setOpenFaq(isOpen ? null : i)}
                 tabIndex={preview ? -1 : undefined}
-                className="flex w-full items-center justify-between gap-3 py-3.5 text-left text-sm font-semibold text-[#14132B] transition-colors hover:text-[#5F58F4]"
+                className="flex w-full items-center justify-between gap-3 py-3.5 text-left text-sm font-semibold text-[#14132B] transition-colors hover:text-[var(--brand-text)]"
               >
                 {f.q}
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className={`shrink-0 text-[#9A99A8] transition-transform ${isOpen ? "rotate-180" : ""}`} aria-hidden>
@@ -465,8 +473,8 @@ function BuyerField({
         onChange={(e) => onChange?.(e.target.value)}
         readOnly={preview}
         tabIndex={preview ? -1 : undefined}
-        className={`h-11 w-full rounded-[11px] border bg-white px-3.5 text-sm text-[#14132B] outline-none transition placeholder:text-[#9A99A8] focus:ring-2 focus:ring-[#EEEDFE] ${
-          error ? "border-[#B42318] focus:border-[#B42318]" : "border-[#E3E2EE] focus:border-[#5F58F4]"
+        className={`h-11 w-full rounded-[11px] border bg-white px-3.5 text-sm text-[#14132B] outline-none transition placeholder:text-[#9A99A8] focus:ring-2 focus:ring-[var(--brand-soft)] ${
+          error ? "border-[#B42318] focus:border-[#B42318]" : "border-[#E3E2EE] focus:border-[var(--brand)]"
         }`}
       />
       {error && errorText && (

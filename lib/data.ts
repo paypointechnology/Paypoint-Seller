@@ -21,6 +21,7 @@ export type SellerProfile = {
   whatsapp: string;
   email: string;
   logoUrl: string;
+  brandColor: string;
   bankName: string;
   accountLast4: string;
   accountName: string;
@@ -62,7 +63,7 @@ export async function getProfile(): Promise<SellerProfile | null> {
     const { data: p } = await supabase
       .from("profiles")
       .select(
-        "id, first_name, last_name, business_name, whatsapp, logo_url, bank_name, account_last4, account_name, bank_code, account_number",
+        "id, first_name, last_name, business_name, whatsapp, logo_url, brand_color, bank_name, account_last4, account_name, bank_code, account_number",
       )
       .eq("id", user.id)
       .single();
@@ -75,6 +76,7 @@ export async function getProfile(): Promise<SellerProfile | null> {
       whatsapp: p?.whatsapp ?? "",
       email: user.email ?? "",
       logoUrl: p?.logo_url ?? "",
+      brandColor: p?.brand_color ?? "",
       bankName: p?.bank_name ?? "",
       accountLast4: p?.account_last4 ?? "",
       accountName: p?.account_name ?? "",

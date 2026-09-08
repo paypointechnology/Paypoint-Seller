@@ -5,10 +5,12 @@ import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { saveBusiness } from "../settings/actions";
 import type { SellerProfile } from "@/lib/data";
+import BrandColorPicker from "@/app/_components/BrandColorPicker";
+import { DEFAULT_BRAND_COLOR } from "@/lib/brand-color";
 
 /**
  * Settings — client-side form, prefilled with the seller's real profile.
- * Sections: Business (name, WhatsApp phone, logo upload + preview — persisted
+ * Sections: Business (name, WhatsApp phone, brand colour, logo upload + preview — persisted
  * via the saveBusiness server action), Bank account / payouts (from the bank
  * setup step), and Account (email + sign out).
  */
@@ -42,6 +44,7 @@ export default function SettingsForm({ profile }: { profile: SellerProfile }) {
   const supabase = createClient();
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [brandColor, setBrandColor] = useState(profile.brandColor || DEFAULT_BRAND_COLOR);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -174,6 +177,11 @@ export default function SettingsForm({ profile }: { profile: SellerProfile }) {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Brand colour */}
+        <div className="mt-5">
+          <BrandColorPicker value={brandColor} onChange={setBrandColor} name="brand_color" />
         </div>
 
         {error && (

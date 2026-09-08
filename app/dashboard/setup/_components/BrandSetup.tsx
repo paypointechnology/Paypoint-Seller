@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import StepHeader from "../../../onboarding/_components/StepHeader";
 import LogoUpload from "../../../onboarding/_components/LogoUpload";
 import Field from "../../../_components/Field";
+import BrandColorPicker from "../../../_components/BrandColorPicker";
 import { createClient } from "@/lib/supabase/client";
 import { saveBrand } from "../actions";
-
-const SWATCHES = ["#5F58F4", "#0B7A4B", "#E0397A", "#F2870D", "#1F7AE0", "#14132B"];
+import { DEFAULT_BRAND_COLOR, isValidHex } from "@/lib/brand-color";
 
 /**
  * Brand setup — reuses the onboarding StepHeader, LogoUpload and Field, wires
@@ -22,14 +22,18 @@ export default function BrandSetup() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [businessName, setBusinessName] = useState("");
-  const [brandColor, setBrandColor] = useState(SWATCHES[0]);
+  const [brandColor, setBrandColor] = useState(DEFAULT_BRAND_COLOR);
   const [logoUrl, setLogoUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canSubmit =
-    firstName.trim() !== "" && businessName.trim() !== "" && logoUrl !== "" && !saving;
+    firstName.trim() !== "" &&
+    businessName.trim() !== "" &&
+    logoUrl !== "" &&
+    isValidHex(brandColor) &&
+    !saving;
 
   async function handleLogo(file: File) {
     setUploading(true);
@@ -117,35 +121,7 @@ export default function BrandSetup() {
           onChange={(e) => setBusinessName(e.target.value)}
         />
 
-        {/* Brand color */}
-        <div className="mb-5">
-          <label className="mb-1.5 block text-xs font-semibold text-[#6C6B7B]">
-            Brand color
-          </label>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {SWATCHES.map((c) => {
-              const active = brandColor === c;
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  aria-label={`Use ${c}`}
-                  aria-pressed={active}
-                  onClick={() => setBrandColor(c)}
-                  className={`h-9 w-9 rounded-full transition ${
-                    active
-                      ? "ring-2 ring-[#14132B] ring-offset-2"
-                      : "ring-1 ring-[#ECEBF3]"
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              );
-            })}
-          </div>
-          <p className="mt-1.5 text-xs text-[#9A99A8]">
-            Used to accent your checkout page.
-          </p>
-        </div>
+        <BrandColorPicker value={brandColor} onChange={setBrandColor} />
 
         {error && (
           <p className="mb-3 text-sm text-[#B42318]" role="alert">
