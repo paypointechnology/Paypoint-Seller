@@ -55,21 +55,73 @@ After it runs, verify under **Table Editor** that `profiles`, `pages`,
 `payments`, `events` exist, and under **Storage** that the `page-images` and
 `logos` buckets exist.
 
-## 4. Enable Google sign-in
+## 4. Enable Google sign-in (OAuth 2.0)
 
-1. Create a Google OAuth client (Google Cloud Console → **APIs & Services →
-   Credentials → Create OAuth client ID → Web application**).
-2. Under **Authorized redirect URIs**, add the Supabase callback shown in the
-   next step (Supabase gives you the exact URL).
-3. In Supabase: **Authentication → Providers → Google** → enable it → paste the
-   **Client ID** and **Client Secret** → save.
-4. In Supabase: **Authentication → URL Configuration**:
-   - **Site URL:** `http://localhost:3000` (use your production URL in prod).
-   - **Redirect URLs:** add `http://localhost:3000/auth/callback`
-     (and your production `https://<domain>/auth/callback`).
+Google sign-in uses the OAuth 2.0 Authorization Code flow with PKCE. Supabase
+Auth is the OAuth client: it talks to Google, receives the tokens, and hands
+the app a one-time code. The app never sees Google credentials, so there are
+no Google keys in `.env.local`; everything lives in the two dashboards below.
 
-The app's own callback route is `app/auth/callback/route.ts`, which runs
-`exchangeCodeForSession` and forwards to `/dashboard`.
+### 4a. Google Cloud Console
+
+1. Pick or create a project at <https://console.cloud.google.com>.
+2. **APIs & Services → OAuth consent screen**
+   - User type **External**, app name **Paypoint**, your support email.
+   - Add your production domain under **Authorized domains** (e.g. `paypoint.co`).
+   - Scopes: the defaults (`email`, `profile`, `openid`) are all we request.
+   - While the app is in **Testing**, only listed test users can sign in. Move
+     it to **In production** before launch (no verification needed for these
+     basic scopes).
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID**
+   - Application type **Web application**.
+   - **Authorized JavaScript origins:** `http://localhost:3000` and
+     `https://<your-domain>`.
+   - **Authorized redirect URIs:** the Supabase callback, which is
+     `https://<project-ref>.supabase.co/auth/v1/callback`
+     (copy it from Supabase → Authentication → Providers → Google).
+4. Copy the **Client ID** and **Client Secret**.
+
+### 4b. Supabase
+
+1. **Authentication → Providers → Google** → enable → paste the Client ID and
+   Client Secret → save.
+2. **Authentication → URL Configuration**
+   - **Site URL:** `http://localhost:3000` in dev, `https://<your-domain>` in prod.
+   - **Redirect URLs:** add `http://localhost:3000/auth/callback` and
+     `https://<your-domain>/auth/callback`. Supabase refuses any `redirectTo`
+     that is not on this list, so a missing entry shows up as the user
+     landing on the Site URL instead of `/auth/callback`.
+
+### 4c. How the flow runs in the app
+
+1. `app/(auth)/_components/GoogleButton.tsx` calls `signInWithOAuth` with
+   `redirectTo = <site>/auth/callback[?next=/some/path]` and
+   `prompt=select_account`, then the browser goes to Google.
+2. Google → Supabase (`/auth/v1/callback`) → our `app/auth/callback/route.ts`
+   with a `code`.
+3. The route exchanges the code for a session (cookies) and redirects to
+   `next`, defaulting to `/dashboard`. Only in-app paths are honoured.
+4. A first-time Google user gets an `auth.users` row and, via the
+   `handle_new_user` trigger (migration `0008`), a `profiles` row with their
+   first and last name taken from Google's `given_name` / `family_name`.
+   `email_verified` is already true because Google verified the address.
+5. If the same email already exists from an email/password signup, Supabase
+   links the Google identity to that account automatically (the email is
+   verified by Google, which is the condition for auto-linking).
+
+Failures come back to `/login?error=<code>` and the login page explains them:
+`oauth_denied` (user cancelled), `oauth_failed` (provider error), and
+`auth_callback_failed` (code missing, expired, or reused).
+
+### 4d. Test it
+
+- Dev: `npm run dev`, open `/signup`, click **Continue with Google**, choose
+  an account, and confirm you land on `/dashboard` with the setup checklist.
+  Check **Table Editor → profiles** for the new row with first/last name.
+- Cancel on Google's screen and confirm the login page shows the
+  "You cancelled" message.
+- Log out, open `/login?next=/dashboard/create`, sign in with Google, and
+  confirm you land on the create page.
 
 ## 5. Enable "Confirm email"
 

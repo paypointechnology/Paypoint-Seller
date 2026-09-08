@@ -2,37 +2,53 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
- * OAuth + email-link callback handler.
- * Supabase redirects here with a `code` (PKCE) after Google sign-in or an
- * email confirmation link. We exchange it for a session (which sets the auth
- * cookies via the server client) and then forward the user on.
+ * OAuth + email-link callback (the redirect target Supabase sends users to).
  *
- * Supports an optional `next` param for post-login destination.
+ * Google sign-in: Supabase completes the OAuth 2.0 code exchange with Google
+ * on its side, then redirects here with a one-time `code` (PKCE). We swap it
+ * for a session, which the server client writes as auth cookies, and forward
+ * the user to `next`. Email confirmation and password-reset links land here
+ * the same way.
+ *
+ * Failure paths land on /login?error=<reason> so the page can explain:
+ *   oauth_denied         the user cancelled on Google's consent screen
+ *   oauth_failed         Google/Supabase reported a provider error
+ *   auth_callback_failed the code was missing, expired, or already used
  */
+
+/** Only in-app, single-slash paths; blocks //evil.com and absolute URLs. */
+function safeNext(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
-  // Only allow relative, in-app redirects to avoid open-redirect abuse.
-  const safeNext = next.startsWith("/") ? next : "/dashboard";
+  const next = safeNext(searchParams.get("next"));
+
+  // Behind a proxy (Vercel, Cloud Run) the public host differs from `origin`.
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const base =
+    process.env.NODE_ENV !== "development" && forwardedHost
+      ? `https://${forwardedHost}`
+      : origin;
+
+  // Provider-side failure (e.g. the user hit "Cancel" on Google's screen).
+  const providerError = searchParams.get("error");
+  if (providerError) {
+    const reason = providerError === "access_denied" ? "oauth_denied" : "oauth_failed";
+    return NextResponse.redirect(`${base}/login?error=${reason}`);
+  }
 
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      // Respect proxy/load-balancer forwarded host in production.
-      const forwardedHost = request.headers.get("x-forwarded-host");
-      const isLocalEnv = process.env.NODE_ENV === "development";
-      if (isLocalEnv) {
-        return NextResponse.redirect(`${origin}${safeNext}`);
-      } else if (forwardedHost) {
-        return NextResponse.redirect(`https://${forwardedHost}${safeNext}`);
-      } else {
-        return NextResponse.redirect(`${origin}${safeNext}`);
-      }
+      return NextResponse.redirect(`${base}${next}`);
     }
+    console.error("[auth/callback] code exchange failed:", error.message);
   }
 
-  // No code, or exchange failed -> back to login with an error flag.
-  return NextResponse.redirect(`${origin}/login?error=auth_callback_failed`);
+  return NextResponse.redirect(`${base}/login?error=auth_callback_failed`);
 }

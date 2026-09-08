@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import AuthShell from "../_components/AuthShell";
 import Field from "../../_components/Field";
 import GoogleButton from "../_components/GoogleButton";
@@ -9,9 +9,33 @@ import Divider from "../_components/Divider";
 import { createClient } from "@/lib/supabase/client";
 import { getSiteUrl } from "@/lib/site-url";
 
+/** Friendly copy for the error codes /auth/callback can send us back with. */
+const CALLBACK_ERRORS: Record<string, string> = {
+  oauth_denied: "You cancelled the Google sign-in. Try again whenever you're ready.",
+  oauth_failed: "Google couldn't complete the sign-in. Please try again.",
+  auth_callback_failed:
+    "That sign-in link has expired or was already used. Log in again to get a fresh one.",
+};
+
+/** Only in-app paths may be used as a post-login destination. */
+function safeNext(raw: string | null): string | undefined {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return undefined;
+  return raw;
+}
+
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginInner />
+    </Suspense>
+  );
+}
+
+function LoginInner() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const next = safeNext(searchParams.get("next"));
 
   const [mode, setMode] = useState<"login" | "forgot">("login");
 
@@ -19,6 +43,15 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Surface a failed OAuth/email-link callback once, then clean the URL.
+  useEffect(() => {
+    const code = searchParams.get("error");
+    if (!code) return;
+    setError(CALLBACK_ERRORS[code] ?? "Something went wrong signing you in. Please try again.");
+    router.replace(next ? `/login?next=${encodeURIComponent(next)}` : "/login");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Forgot-password state
   const [resetEmail, setResetEmail] = useState("");
@@ -43,17 +76,8 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(next ?? "/dashboard");
     router.refresh();
-  }
-
-  async function handleGoogle() {
-    setError(null);
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${getSiteUrl()}/auth/callback` },
-    });
-    if (oauthError) setError(oauthError.message);
   }
 
   function openForgot() {
@@ -205,7 +229,11 @@ export default function LoginPage() {
           </form>
 
           <Divider />
-          <GoogleButton label="Continue with Google" onClick={handleGoogle} />
+          <GoogleButton
+            label="Continue with Google"
+            next={next}
+            onError={(m) => setError(m || null)}
+          />
         </>
       )}
     </AuthShell>

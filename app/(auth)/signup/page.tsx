@@ -48,15 +48,6 @@ export default function SignupPage() {
     router.push(`/verify?email=${encodeURIComponent(email.trim())}`);
   }
 
-  async function handleGoogle() {
-    setError(null);
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${getSiteUrl()}/auth/callback` },
-    });
-    if (oauthError) setError(oauthError.message);
-  }
-
   return (
     <AuthShell
       heading="Create your account"
@@ -104,7 +95,7 @@ export default function SignupPage() {
       </form>
 
       <Divider />
-      <GoogleButton label="Continue with Google" onClick={handleGoogle} />
+      <GoogleButton label="Continue with Google" onError={(m) => setError(m || null)} />
 
       <p className="mt-5 text-center text-xs leading-relaxed text-[#9A99A8]">
         By creating an account, you agree to our{" "}
